@@ -1,7 +1,13 @@
 import FormContainer from "../components/FormContainer"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import {Form, Button, Col ,Row} from "react-bootstrap"
+import {toast} from 'react-toastify'
+import {Form, Button, Col ,Row} from "react-bootstrap";
+import {useRegisterMutation} from "../slices/usersApiSlice"
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { setCredentials } from "../slices/authSlice";
+import Loader from "../components/Loader";
 
 
 const RegisterScreen = () => {
@@ -11,9 +17,34 @@ const RegisterScreen = () => {
   const  [password ,setPassword] = useState('')
   const  [confirmPassword ,setConfirmPassword] = useState('')
 
+  const {userInfo} = useSelector((state) => state.auth)
+
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  const [register, {isLoading}] = useRegisterMutation();
+
+  useEffect(()=> {
+    if(userInfo){
+      navigate('/')
+    }
+  }, [userInfo, navigate])
+
+
   const submitHandler = async(e) => {
     e.preventDefault();
-    console.log(('submit'));
+    if(password !== confirmPassword) {
+      toast.error('Passwords do not match')
+    }else{
+      try {
+        const response = await register({name, email, password}).unwrap()
+        dispatch(setCredentials(response))
+        toast.success(`Welcome ${response.name}`)
+        navigate('/')
+      } catch (error) {
+        toast.error(error?.data?.message || error.error)
+      }
+    }
   } 
 
   return (
@@ -54,7 +85,7 @@ const RegisterScreen = () => {
         <Form.Group className="my-2" controlId="confirmPassword">
           <Form.Label>Confirm Password</Form.Label>
           <Form.Control
-            type="confirmPassword"
+            type="password"
             placeholder="Confirm Password"
             value={confirmPassword}
             onChange={(e)=> setConfirmPassword(e.target.value)}
@@ -65,9 +96,11 @@ const RegisterScreen = () => {
           Sign Up
         </Button>
 
+        { isLoading && <Loader/>  }
+
         <Row className="py-3">
           <Col>
-            Already have an account ?  <Link to="/login">Register</Link>
+            Already have an account ?  <Link to="/login">Login</Link>
           </Col>
         </Row>
       </Form>

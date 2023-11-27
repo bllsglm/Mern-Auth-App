@@ -22,7 +22,7 @@ const registerUser = asyncHandler(async(req,res) => {
       email : user.email
     })
   }else{
-    res.status(404);
+    res.status(400);
     throw new Error("Invalid user data")
   }
 })
@@ -39,7 +39,7 @@ const authUser = asyncHandler(async(req,res) => {
     generateToken(res, user._id)
     res.status(200).json({id : user._id, email: user.email, name : user.name})
   }else{
-    res.status(400)
+    res.status(401)
     throw new Error("Invalid email or password");
   }
 })
@@ -50,7 +50,7 @@ const authUser = asyncHandler(async(req,res) => {
 // @desc Private
 const logoutUser = asyncHandler(async(req,res) => {
   res.clearCookie("jwt")
-  res.status(200).json({message : "Logged out successfully"})
+  res.status(200).json({message : "User Logged out"})
 })
 
 
@@ -58,14 +58,41 @@ const logoutUser = asyncHandler(async(req,res) => {
 // route GET /api/user/profile
 // @desc Private
 const getUser = asyncHandler(async(req,res) => {
-  res.send("get User Profile")
+  const user = await User.findOne({_id: req.user._id})
+  if(user) {
+    res.status(200).json({
+      name : user.name ,
+      id : user._id, 
+      email : user.email})
+  }else{
+    res.status(400)
+    throw new Error("User not found")
+  }
 })
 
 // desc Update profile
 // route PUT /api/user/profile
 // @desc Private
 const updateUser = asyncHandler(async(req,res) => {
-  res.send("Update profile")
+  const user = await User.findOne({_id : req.user._id})
+  if(user){
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    
+    if(req.body.password){
+      user.password = req.body.password
+    }
+    
+    const updatedUser = await user.save();
+    res.status(200).json({
+      id : updatedUser._id,
+      name: user.name,
+      email : user.email,
+    })
+  }else{
+    res.status(400);
+    throw new Error("User not found")
+   }
 })
 
 

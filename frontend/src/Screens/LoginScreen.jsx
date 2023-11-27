@@ -1,7 +1,12 @@
 import FormContainer from "../components/FormContainer"
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
+import { useLoginMutation } from "../slices/usersApiSlice";
+import {setCredentials} from "../slices/authSlice"
 import {Form, Button, Col ,Row} from "react-bootstrap"
+import { toast } from "react-toastify";
+import Loader from "../components/Loader";
 
 
 const LoginScreen = () => {
@@ -9,9 +14,31 @@ const LoginScreen = () => {
   const  [email ,setEmail] = useState('')
   const  [password ,setPassword] = useState('')
 
+  const { userInfo } = useSelector((state) => state.auth)
+
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+
+  const [loginApiCall , {isLoading, error}] = useLoginMutation()
+
+
+  useEffect(()=>{
+    if(userInfo){
+      navigate('/')
+    }
+  },[userInfo,navigate])
+
+  
   const submitHandler = async(e) => {
     e.preventDefault();
-    console.log(('submit'));
+    try {
+      const response = await loginApiCall({email, password}).unwrap();
+      dispatch(setCredentials(response))
+      navigate('/')
+      toast.success('You\'re  logged in')
+    } catch (error) {
+      toast.error(error?.data?.message || error.error)
+    }
   } 
 
   return (
@@ -42,6 +69,8 @@ const LoginScreen = () => {
         <Button type="submit" variant="primary" className="mt-3">
           Sign In
         </Button>
+
+        { isLoading && <Loader/>  }
 
         <Row className="py-3">
           <Col>

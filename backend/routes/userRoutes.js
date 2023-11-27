@@ -13,7 +13,7 @@ import { protect } from "../middlewares/authMiddleware.js";
 
 router.post("/", registerUser )
 router.post("/auth", authUser )
-router.post("/logout", protect ,logoutUser)
+router.post("/logout",logoutUser)
 router.route("/profile").get(protect, getUser).put(protect,updateUser)
 
 
